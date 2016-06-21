@@ -8,19 +8,8 @@ import seaborn as sns
 import datetime as dt
 import sys
 import matplotlib.pyplot as plt
-import matplotlib.gridspec as gridspec
-
-from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import StandardScaler
-from sklearn.decomposition import PCA
-
-from sklearn.tree import DecisionTreeRegressor
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.svm import SVR
 from sklearn.neighbors import KNeighborsRegressor
-from sklearn import cross_validation
 from cStringIO import StringIO
-from sklearn.grid_search import GridSearchCV
 
 
 def main(met_fname, gday_outfname, var):
