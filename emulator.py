@@ -1,14 +1,12 @@
 #!/usr/bin/env python
 
 import os, re
-import pickle
 import numpy as np
 import pandas as pd
 import seaborn as sns
 import datetime as dt
 import sys
 import matplotlib.pyplot as plt
-import matplotlib.gridspec as gridspec
 
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
@@ -50,10 +48,7 @@ def main(met_fname, gday_outfname, var):
     #                                      test_size=0.4, random_state=0)
 
 
-    param_KNR = { \
-        "n_neighbors": [20], \
-        "weights": ['distance'], \
-        }
+    param_KNR = { "n_neighbors": [20], "weights": ['distance'] }
 
     #regmod = DecisionTreeRegressor()
     #regmod = RandomForestRegressor()
@@ -79,8 +74,10 @@ def main(met_fname, gday_outfname, var):
     df = pd.DataFrame({'DT': df.index, 'emu': predict, 'gday': df[var]})
 
 
-    plt.plot_date(df.index, df['emu'], 'o', label='Emulator')
-    plt.plot_date(df.index, df['gday'], '.', label='GDAY')
+    plt.plot_date(df.index[4000:4383], df['emu'][4000:4383], 'o',
+                  label='Emulator')
+    plt.plot_date(df.index[4000:4383], df['gday'][4000:4383], 'o',
+                  label='GDAY')
     plt.ylabel('GPP (g C m$^{-2}$ s$^{-1}$)')
     plt.legend()
     plt.show()
