@@ -8,8 +8,19 @@ import seaborn as sns
 import datetime as dt
 import sys
 import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
+
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.svm import SVR
 from sklearn.neighbors import KNeighborsRegressor
+from sklearn import cross_validation
 from cStringIO import StringIO
+from sklearn.grid_search import GridSearchCV
 
 
 def main(met_fname, gday_outfname, var):
@@ -21,22 +32,52 @@ def main(met_fname, gday_outfname, var):
                          date_parser=date_converter)
 
     # Need to build numpy array, so drop year, doy cols
-    met_data_all = df_met.ix[:,2:].values
-    met_data = df_met.ix[0:4000,2:].values
+    met_data = df_met.ix[:,2:].values
+    met_data_train = df_met.ix[0:4000,2:].values
 
     # Load GDAY outputs
     df = pd.read_csv(gday_outfname, skiprows=3, sep=",", skipinitialspace=True)
     df['date'] = make_data_index(df)
     df = df.set_index('date')
-    target = df[var][0:4000].values
-    print len(target), len(met_data)
 
-    # build emulator
-    regmod = KNeighborsRegressor(n_neighbors=20, weights="distance")
-    regmod.fit(met_data, target)
-    predict = regmod.predict(met_data_all)
+    target = df[var][0:4000].values
+
+    # BUILD MODELS
+
+    # hold back 40% of the dataset for testing
+    #X_train, X_test, Y_train, Y_test = \
+    #    cross_validation.train_test_split(met_data, target, \
+    #                                      test_size=0.4, random_state=0)
+
+
+    param_KNR = { \
+        "n_neighbors": [20], \
+        "weights": ['distance'], \
+        }
+
+    #regmod = DecisionTreeRegressor()
+    #regmod = RandomForestRegressor()
+    #regmod = SVR()
+    regmod = KNeighborsRegressor()
+
+
+    pipeit3 = lambda model: make_pipeline(StandardScaler(), PCA(), model)
+    pipeit2 = lambda model: make_pipeline(StandardScaler(), model)
+    regmod_p = pipeit2(regmod)
+    modlab = regmod_p.steps[-1][0]
+    par_grid = {'{0}__{1}'.format(modlab, parkey): pardat \
+                 for (parkey, pardat) in param_KNR.iteritems()}
+
+    #emulator = GridSearchCV(regmod, param_grid=param_DTR, cv=5)
+    emulator = GridSearchCV(regmod_p, param_grid=par_grid, cv=5)
+
+    #emulator.fit(X_train, Y_train)
+    emulator.fit(met_data_train, target)
+    predict = emulator.predict(met_data)
+
 
     df = pd.DataFrame({'DT': df.index, 'emu': predict, 'gday': df[var]})
+
 
     plt.plot_date(df.index, df['emu'], 'o', label='Emulator')
     plt.plot_date(df.index, df['gday'], '.', label='GDAY')
