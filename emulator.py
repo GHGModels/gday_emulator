@@ -21,18 +21,20 @@ def main(met_fname, gday_outfname, var):
                          date_parser=date_converter)
 
     # Need to build numpy array, so drop year, doy cols
-    met_data = df_met.ix[:,2:].values
+    met_data_all = df_met.ix[:,2:].values
+    met_data = df_met.ix[0:4000,2:].values
 
     # Load GDAY outputs
     df = pd.read_csv(gday_outfname, skiprows=3, sep=",", skipinitialspace=True)
     df['date'] = make_data_index(df)
     df = df.set_index('date')
-    target = df[var].values
+    target = df[var][0:4000].values
+    print len(target), len(met_data)
 
     # build emulator
     regmod = KNeighborsRegressor(n_neighbors=20, weights="distance")
-    regmod.fit(met_data, df[var])
-    predict = regmod.predict(met_data)
+    regmod.fit(met_data, target)
+    predict = regmod.predict(met_data_all)
 
     df = pd.DataFrame({'DT': df.index, 'emu': predict, 'gday': df[var]})
 
